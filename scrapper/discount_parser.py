@@ -1,5 +1,4 @@
-from scrapper.headers import HEADERS, create_json_data
-from datetime import datetime
+from scrapper.headers import create_json_data
 import requests
 
 
