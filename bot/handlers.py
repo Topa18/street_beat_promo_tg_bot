@@ -22,12 +22,12 @@ async def include_notification(dp, bot):
             if state:
                 await state.clear()
 
-        # Псевдостатистика - оповещение о пользовании ботом
-        await bot.send_message(chat_id=TG_ID,
-                               text=f"Пользователь только что начал использовать меня!")
-        
+            # Псевдостатистика - оповещение о пользовании ботом
+            await bot.send_message(chat_id=TG_ID,
+                                text=f"Пользователь только что начал использовать меня!")
+            
         await message.answer(text=f"Здравствуй, {message.from_user.first_name}!\n"
-                                "Для кого будем искать кроссовки?",
+                                    "Для кого будем искать кроссовки?",
                              reply_markup=kbs.gender_kb)
 
 
@@ -49,7 +49,7 @@ async def get_man_sneakers(message: Message, state: FSMContext):
                                   "Это может занять около минуты...",
                              reply_markup=ReplyKeyboardRemove())
         
-        data = get_data(headers=HEADERS, gender='man')
+        data = await get_data(headers=HEADERS, gender='man')
         proceced_data = post_process_data(data)
    
     if required_gender[-2] == 'женские': 
@@ -58,7 +58,7 @@ async def get_man_sneakers(message: Message, state: FSMContext):
                                   "Это может занять около минуты...",
                              reply_markup=ReplyKeyboardRemove())
         
-        data = get_data(headers=HEADERS, gender='woman')
+        data = await get_data(headers=HEADERS, gender='woman')
         proceced_data = post_process_data(data)
     
     await state.update_data(stack=0)

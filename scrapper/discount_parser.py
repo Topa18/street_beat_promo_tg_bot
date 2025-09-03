@@ -1,4 +1,5 @@
 from scrapper.headers import create_json_data
+import aiohttp
 import requests
 
 
@@ -22,7 +23,7 @@ def get_pages_qty(headers: dict, gender: str):
     return pages_qty
 
 
-def get_data(headers: dict, gender: str):
+async def get_data(headers: dict, gender: str):
     """Get data for all sneakers for sale for chosen gender
 
     Args:
@@ -39,40 +40,41 @@ def get_data(headers: dict, gender: str):
 
     for page in range(1, pages_qty + 1):
         json_data = create_json_data(gender, page)
-
-        response = requests.post('https://street-beat.ru/api/catalog/page',
-                                 headers=headers,
-                                 json=json_data)
         
-        data = response.json()
+        async with aiohttp.ClientSession() as session:
+            async with session.post('https://street-beat.ru/api/catalog/page',
+                                    headers=headers,
+                                    json=json_data) as response:
+                
+                data = await response.json()
 
-        sneakers_at_page = data.get('catalog').get('listing').get('items')
+                sneakers_at_page = data.get('catalog').get('listing').get('items')
         
-        for item in sneakers_at_page:
-            # Сheck if item exists and item for sale
-            if item.get('price') and item.get('sizes'):
-                rec_price = item.get('price').get('recommended').get('price')
-                special_price = item.get('price').get('special').get('price')
-            
-                if rec_price != special_price:
-                    sizes = ""
-                    available_sizes = item.get('sizes').get('options')
+                for item in sneakers_at_page:
+                    # Сheck if item exists and item for sale
+                    if item.get('price') and item.get('sizes'):
+                        rec_price = item.get('price').get('recommended').get('price')
+                        special_price = item.get('price').get('special').get('price')
+                    
+                        if rec_price != special_price:
+                            sizes = ""
+                            available_sizes = item.get('sizes').get('options')
 
-                    for size in available_sizes:
-                        sizes += size.get('grid').get('rus') + '; '
+                            for size in available_sizes:
+                                sizes += size.get('grid').get('rus') + '; '
 
-                    item_card = {
-                        "url": "https://street-beat.ru" + item.get('url'),
-                        "brand": item.get('brand'),
-                        "model": item.get('title'),
-                        "old_price": rec_price,
-                        "new_price" : special_price,
-                        "type": item.get('badge').get('text'),
-                        "color": item.get('color'),
-                        "sizes": sizes 
-                    }
+                            item_card = {
+                                "url": "https://street-beat.ru" + item.get('url'),
+                                "brand": item.get('brand'),
+                                "model": item.get('title'),
+                                "old_price": rec_price,
+                                "new_price" : special_price,
+                                "type": item.get('badge').get('text'),
+                                "color": item.get('color'),
+                                "sizes": sizes 
+                            }
 
-                    sneakers_for_sale.append(item_card)
+                            sneakers_for_sale.append(item_card)
 
     return sneakers_for_sale
 
