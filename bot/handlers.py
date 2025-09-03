@@ -4,6 +4,7 @@ from aiogram.types import Message, ReplyKeyboardRemove
 from aiogram.fsm.context import FSMContext
 from aiogram.utils.markdown import hlink, hbold
 
+from bot.config import TG_ID
 from bot import keyboards as kbs
 from bot.states import Output
 from scrapper.headers import HEADERS
@@ -12,18 +13,32 @@ from scrapper.discount_parser import get_data, post_process_data
 
 router = Router()
 
-@router.message(CommandStart())
-async def cmd_start(message: Message):
-    await message.answer(text=f"Здравствуй, {message.from_user.first_name}!\n"
-                               "Для кого будем искать кроссовки?",
-                         reply_markup=kbs.gender_kb)
+
+async def include_notification(dp, bot):
+
+    @router.message(CommandStart())
+    async def cmd_start(message: Message, state: FSMContext = None):
+        if state:
+            if state:
+                await state.clear()
+
+        # Псевдостатистика - оповещение о пользовании ботом
+        await bot.send_message(chat_id=TG_ID,
+                               text=f"Пользователь только что начал использовать меня!")
+        
+        await message.answer(text=f"Здравствуй, {message.from_user.first_name}!\n"
+                                "Для кого будем искать кроссовки?",
+                             reply_markup=kbs.gender_kb)
 
 
 @router.message(F.text == 'Сбросить 🔙')
-async def canceled(message: Message):
+async def canceled(message: Message, state: FSMContext = None):
+    if state:
+        await state.clear()
+
     await message.answer(text='Надеюсь я смог помочь!',
                          reply_markup=kbs.gender_kb)
-    
+
 
 @router.message(F.text.startswith('Ищем'))
 async def get_man_sneakers(message: Message, state: FSMContext):
